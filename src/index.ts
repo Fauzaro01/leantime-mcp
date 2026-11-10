@@ -8,10 +8,7 @@ import { loadConfig } from "./config.js";
 import { LeantimeClient } from "./leantime.js";
 
 const cfg = loadConfig();
-const client = new LeantimeClient(
-  cfg.url,
-  cfg.authMethod === "bearer" ? `Bearer ${cfg.token}` : cfg.token
-);
+const client = new LeantimeClient(cfg.url, cfg.token);
 
 const server = new Server(
   {
@@ -25,45 +22,119 @@ const server = new Server(
   }
 );
 
-const toolsDefinition = [
-  { name: "listProjects", description: "List all projects accessible to the user" },
-  { name: "listTickets", description: "List all tickets across active projects" },
-  { name: "listTicketTypes", description: "Get valid ticket types (Story, Task, Bug, etc.)" },
-  { name: "listStatusLabels", description: "Get board/kanban ticket statuses" },
-  { name: "listProjectTypes", description: "Get all project types" },
-  { name: "listClients", description: "List clients" },
-  { name: "listSprints", description: "List all sprints" },
-  { name: "listMilestones", description: "List all milestones" },
-  { name: "listUsers", description: "List workspace users" },
-  { name: "listTimeEntries", description: "List logged time entries" },
-  { name: "searchProjects", description: "Search projects by query string" },
-  { name: "searchTickets", description: "Search tickets by query string" },
-  { name: "getProject", description: "Get details of a single project by id" },
-  { name: "getTicket", description: "Get details of a single ticket by id" },
-  { name: "getClient", description: "Get details of a client by id" },
-  { name: "getUser", description: "Get details of a user by id" },
-  { name: "getMilestone", description: "Get details of a milestone by id" },
-  { name: "createProject", description: "Create a new project" },
-  { name: "createTicket", description: "Create a new ticket" },
-  { name: "updateTicket", description: "Update a ticket properties" },
-  { name: "deleteTicket", description: "Delete a ticket by id" },
-  { name: "moveTicket", description: "Move ticket to a different status" },
-  { name: "addComment", description: "Add a comment to a ticket" },
-  { name: "logTime", description: "Log work time against a project/ticket" },
-  { name: "ping", description: "Check connection to Leantime API" },
+const tools = [
+  {
+    name: "ping",
+    description: "Check connection to Leantime API",
+    inputSchema: { type: "object", properties: {} },
+  },
+  {
+    name: "listProjects",
+    description: "List all projects accessible to the user",
+    inputSchema: { type: "object", properties: {} },
+  },
+  {
+    name: "getProject",
+    description: "Get details of a single project by ID",
+    inputSchema: {
+      type: "object",
+      properties: { id: { type: "number", description: "Project ID" } },
+      required: ["id"],
+    },
+  },
+  {
+    name: "listTickets",
+    description: "List tickets, optionally filtered by projectId",
+    inputSchema: {
+      type: "object",
+      properties: {
+        projectId: { type: "number", description: "Filter tickets by Project ID" },
+      },
+    },
+  },
+  {
+    name: "getTicket",
+    description: "Get details of a single ticket by ID",
+    inputSchema: {
+      type: "object",
+      properties: { id: { type: "number", description: "Ticket ID" } },
+      required: ["id"],
+    },
+  },
+  {
+    name: "createTicket",
+    description: "Create a new ticket in Leantime",
+    inputSchema: {
+      type: "object",
+      properties: {
+        headline: { type: "string", description: "Ticket title" },
+        description: { type: "string", description: "Ticket body / description" },
+        projectId: { type: "number", description: "Project ID" },
+        type: { type: "string", description: "task | story | bug | idea" },
+        status: { type: "number", description: "Status ID" },
+        editorId: { type: "number", description: "Assigned user ID" },
+      },
+      required: ["headline"],
+    },
+  },
+  {
+    name: "listUsers",
+    description: "List workspace users",
+    inputSchema: { type: "object", properties: {} },
+  },
+  {
+    name: "getUser",
+    description: "Get user details by ID",
+    inputSchema: {
+      type: "object",
+      properties: { id: { type: "number", description: "User ID" } },
+      required: ["id"],
+    },
+  },
+  {
+    name: "listClients",
+    description: "List clients",
+    inputSchema: { type: "object", properties: {} },
+  },
+  {
+    name: "getClient",
+    description: "Get client details by ID",
+    inputSchema: {
+      type: "object",
+      properties: { id: { type: "number", description: "Client ID" } },
+      required: ["id"],
+    },
+  },
+  {
+    name: "listTimesheets",
+    description: "List logged time entries for a date range",
+    inputSchema: {
+      type: "object",
+      properties: {
+        dateFrom: { type: "string", description: "Start date YYYY-MM-DD" },
+        dateTo: { type: "string", description: "End date YYYY-MM-DD" },
+        projectId: { type: "number", description: "Filter by project ID" },
+        userId: { type: "number", description: "Filter by user ID" },
+      },
+      required: ["dateFrom", "dateTo"],
+    },
+  },
+  {
+    name: "callRpc",
+    description: "Call any arbitrary Leantime JSON-RPC method directly",
+    inputSchema: {
+      type: "object",
+      properties: {
+        method: { type: "string", description: "RPC method (e.g. leantime.rpc.projects.getAll)" },
+        params: { type: "object", description: "Method parameters" },
+      },
+      required: ["method"],
+    },
+  },
 ];
 
 server.setRequestHandler(ListToolsRequestSchema, async () => {
-  return {
-    tools: toolsDefinition.map((t) => ({
-      name: t.name,
-      description: t.description,
-      inputSchema: {
-        type: "object",
-        properties: {},
-      },
-    })),
-  };
+  return { tools };
 });
 
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
@@ -74,101 +145,61 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     let result: unknown;
     switch (name) {
       case "ping":
+        await client.listProjects();
         result = { status: "ok", url: cfg.url };
         break;
       case "listProjects":
         result = await client.listProjects();
         break;
-      case "listTickets":
-        result = await client.listTickets();
-        break;
-      case "listTicketTypes":
-        result = await client.listTicketTypes();
-        break;
-      case "listStatusLabels":
-        result = await client.listStatusLabels();
-        break;
-      case "listProjectTypes":
-        result = await client.listProjectTypes();
-        break;
-      case "listClients":
-        result = await client.listClients();
-        break;
-      case "listSprints":
-        result = await client.listSprints();
-        break;
-      case "listMilestones":
-        result = await client.listMilestones();
-        break;
-      case "listUsers":
-        result = await client.listUsers();
-        break;
-      case "listTimeEntries":
-        result = await client.listTimeEntries();
-        break;
-      case "searchProjects":
-        result = await client.searchProjects(String(a["query"] ?? ""));
-        break;
-      case "searchTickets":
-        result = await client.searchTickets(String(a["query"] ?? ""));
-        break;
       case "getProject":
-        result = await client.getProject(Number(a["id"] ?? 0));
+        result = await client.getProject(Number(a["id"]));
+        break;
+      case "listTickets":
+        result = await client.listTickets(a["projectId"] ? Number(a["projectId"]) : undefined);
         break;
       case "getTicket":
-        result = await client.getTicket(Number(a["id"] ?? 0));
-        break;
-      case "getClient":
-        result = await client.getClient(Number(a["id"] ?? 0));
-        break;
-      case "getUser":
-        result = await client.getUser(Number(a["id"] ?? 0));
-        break;
-      case "getMilestone":
-        result = await client.getMilestone(Number(a["id"] ?? 0));
-        break;
-      case "createProject":
-        result = await client.createProject(String(a["name"] ?? ""), a["description"] as string | undefined);
+        result = await client.getTicket(Number(a["id"]));
         break;
       case "createTicket":
         result = await client.createTicket(a);
         break;
-      case "updateTicket":
-        result = await client.updateTicket(Number(a["id"] ?? 0), a);
+      case "listUsers":
+        result = await client.listUsers();
         break;
-      case "deleteTicket":
-        result = await client.deleteTicket(Number(a["id"] ?? 0));
+      case "getUser":
+        result = await client.getUser(Number(a["id"]));
         break;
-      case "moveTicket":
-        result = await client.moveTicket(Number(a["id"] ?? 0), String(a["status"] ?? ""));
+      case "listClients":
+        result = await client.listClients();
         break;
-      case "addComment":
-        result = await client.addComment(Number(a["ticketId"] ?? 0), String(a["content"] ?? ""));
+      case "getClient":
+        result = await client.getClient(Number(a["id"]));
         break;
-      case "logTime":
-        result = await client.logTime(Array.isArray(a["entries"]) ? (a["entries"] as Array<Record<string, unknown>>) : [a]);
+      case "listTimesheets":
+        result = await client.listTimesheets({
+          dateFrom: String(a["dateFrom"]),
+          dateTo: String(a["dateTo"]),
+          projectId: a["projectId"] ? Number(a["projectId"]) : undefined,
+          userId: a["userId"] ? Number(a["userId"]) : undefined,
+        });
+        break;
+      case "callRpc":
+        result = await client.call(
+          String(a["method"]),
+          a["params"] as Record<string, unknown> | undefined
+        );
         break;
       default:
         throw new Error(`Unknown tool: ${name}`);
     }
 
     return {
-      content: [
-        {
-          type: "text",
-          text: JSON.stringify(result, null, 2),
-        },
-      ],
+      content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
     };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     return {
-      content: [
-        {
-          type: "text",
-          text: `Error executing ${name}: ${msg}`,
-        },
-      ],
+      content: [{ type: "text", text: `Error executing ${name}: ${msg}` }],
       isError: true,
     };
   }

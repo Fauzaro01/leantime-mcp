@@ -1,24 +1,18 @@
 # Leantime MCP Server
 
-A custom MCP server bridge for the Leantime project management system, enabling MCP-compatible clients (Claude, VS Code, Cursor, etc.) to interact with Leantime via its public REST API.
+Model Context Protocol (MCP) server for [Leantime](https://leantime.io) self-hosted project management system, communicating via its native JSON-RPC 2.0 API.
 
 ## Features
 
-- Full CRUD support for projects, tickets, tickets types, milestones, users, time entries, and more.
-- Search functionality for projects and tickets.
-- Create, update, delete, duplicate, and move tickets and projects.
-- Log time entries and track progress.
-- Auth via Personal Access Token (Bearer) or API key (`x-api-key` header).
-- Compatible with Claude Desktop, VS Code, Cursor, and any MCP-compatible client.
+- **Projects**: `listProjects`, `getProject`
+- **Tickets**: `listTickets` (with optional `projectId` filter), `getTicket`, `createTicket`
+- **Users**: `listUsers`, `getUser`
+- **Clients**: `listClients`, `getClient`
+- **Timesheets**: `listTimesheets` (requires `dateFrom`, `dateTo`, optional `projectId` / `userId`)
+- **Raw RPC**: `callRpc` — execute any arbitrary Leantime JSON-RPC method (`leantime.rpc.*`)
+- **Health**: `ping`
 
 ## Installation
-
-### Prerequisites
-
-- Node.js 18+
-- npm or yarn
-
-### Install
 
 ```bash
 git clone https://github.com/Fauzaro01/leantime-mcp.git
@@ -27,69 +21,51 @@ npm install
 npm run build
 ```
 
-### Run
-
-```bash
-npm start
-```
-
-The MCP server will listen on port 3456 (configurable via `PORT` env variable).
-
 ## Configuration
 
-Create a `.env` file in the project root:
+Create `.env` file in the project root:
 
 ```env
 LEANTIME_URL=https://your-leantime-instance.com
-LEANTIME_TOKEN=your_personal_access_token
-# Optional: LEANTIME_AUTH=bearer (default) or api_key for x-api-key header
+LEANTIME_TOKEN=your_api_key_or_token
 ```
 
-### Configuration Options
-
-| Variable | Description |
-|----------|-------------|
-| `LEANTIME_URL` | Base URL of your Leantime instance (e.g., `https://your-leantime-instance.com`) |
-| `LEANTIME_TOKEN` | Personal Access Token or API key |
-| `LEANTIME_AUTH` | `bearer` (default) or `api_key` to use `x-api-key` header |
+> **Note**: Leantime uses Bearer token authentication against the `/api/jsonrpc` endpoint. Generate your API key in Leantime under **User Profile / Settings -> API Keys**.
 
 ## Usage
 
-### In Claude Desktop
+### Claude Desktop
 
-Add the server to your `claude_desktop_config.json`:
+Add to `claude_desktop_config.json`:
 
 ```json
 {
   "mcpServers": {
     "leantime": {
       "command": "node",
-      "args": ["/path/to/dist/index.js"],
+      "args": ["C:/path/to/leantime-mcp/dist/index.js"],
       "env": {
         "LEANTIME_URL": "https://your-leantime-instance.com",
-        "LEANTIME_TOKEN": "your_token_here",
-        "LEANTIME_AUTH": "bearer"
+        "LEANTIME_TOKEN": "your_api_key_here"
       }
     }
   }
 }
 ```
 
-Restart Claude Desktop. You can now call tools like `listProjects`, `listTickets`, `createTicket`, etc., directly from the chat.
+### VS Code / Cursor
 
-### In VS Code / Cursor
-
-Use the generic MCP client configuration pointing to the server executable:
+Point MCP client configuration to `dist/index.js` using `node`:
 
 ```json
 {
   "mcpServers": {
     "leantime": {
       "command": "node",
-      "args": ["/path/to/dist/index.js"],
+      "args": ["/absolute/path/to/leantime-mcp/dist/index.js"],
       "env": {
         "LEANTIME_URL": "https://your-leantime-instance.com",
-        "LEANTIME_TOKEN": "your_token_here"
+        "LEANTIME_TOKEN": "your_api_key_here"
       }
     }
   }
@@ -98,8 +74,4 @@ Use the generic MCP client configuration pointing to the server executable:
 
 ## License
 
-AGPL-3.0-or-later
-
----
-
-© 2026 Fauzaro01. All rights reserved.
+GPL-3.0
