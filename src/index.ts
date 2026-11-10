@@ -119,18 +119,6 @@ const tools = [
       required: ["dateFrom", "dateTo"],
     },
   },
-  {
-    name: "callRpc",
-    description: "Call any arbitrary Leantime JSON-RPC method directly",
-    inputSchema: {
-      type: "object",
-      properties: {
-        method: { type: "string", description: "RPC method (e.g. leantime.rpc.projects.getAll)" },
-        params: { type: "object", description: "Method parameters" },
-      },
-      required: ["method"],
-    },
-  },
 ];
 
 server.setRequestHandler(ListToolsRequestSchema, async () => {
@@ -182,12 +170,6 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           projectId: a["projectId"] ? Number(a["projectId"]) : undefined,
           userId: a["userId"] ? Number(a["userId"]) : undefined,
         });
-        break;
-      case "callRpc":
-        result = await client.call(
-          String(a["method"]),
-          a["params"] as Record<string, unknown> | undefined
-        );
         break;
       default:
         throw new Error(`Unknown tool: ${name}`);

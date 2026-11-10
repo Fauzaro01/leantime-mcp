@@ -9,7 +9,6 @@ Model Context Protocol (MCP) server for [Leantime](https://leantime.io) self-hos
 - **Users**: `listUsers`, `getUser`
 - **Clients**: `listClients`, `getClient`
 - **Timesheets**: `listTimesheets` (requires `dateFrom`, `dateTo`, optional `projectId` / `userId`)
-- **Raw RPC**: `callRpc` — execute any arbitrary Leantime JSON-RPC method (`leantime.rpc.*`)
 - **Health**: `ping`
 
 ## Installation
