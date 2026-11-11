@@ -11,27 +11,9 @@ Model Context Protocol (MCP) server for [Leantime](https://leantime.io) self-hos
 - **Timesheets**: `listTimesheets` (requires `dateFrom`, `dateTo`, optional `projectId` / `userId`)
 - **Health**: `ping`
 
-## Installation
+## Quick Start (1 command)
 
-```bash
-git clone https://github.com/Fauzaro01/leantime-mcp.git
-cd leantime-mcp
-npm install
-npm run build
-```
-
-## Configuration
-
-Create `.env` file in the project root:
-
-```env
-LEANTIME_URL=https://your-leantime-instance.com
-LEANTIME_TOKEN=your_api_key_or_token
-```
-
-> **Note**: Leantime uses Bearer token authentication against the `/api/jsonrpc` endpoint. Generate your API key in Leantime under **User Profile / Settings -> API Keys**.
-
-## Usage
+No clone, no build — just configure your MCP client:
 
 ### Claude Desktop
 
@@ -41,8 +23,8 @@ Add to `claude_desktop_config.json`:
 {
   "mcpServers": {
     "leantime": {
-      "command": "node",
-      "args": ["C:/path/to/leantime-mcp/dist/index.js"],
+      "command": "npx",
+      "args": ["-y", "@fauzaro01/leantime-mcp"],
       "env": {
         "LEANTIME_URL": "https://your-leantime-instance.com",
         "LEANTIME_TOKEN": "your_api_key_here"
@@ -54,14 +36,12 @@ Add to `claude_desktop_config.json`:
 
 ### VS Code / Cursor
 
-Point MCP client configuration to `dist/index.js` using `node`:
-
 ```json
 {
   "mcpServers": {
     "leantime": {
-      "command": "node",
-      "args": ["/absolute/path/to/leantime-mcp/dist/index.js"],
+      "command": "npx",
+      "args": ["-y", "@fauzaro01/leantime-mcp"],
       "env": {
         "LEANTIME_URL": "https://your-leantime-instance.com",
         "LEANTIME_TOKEN": "your_api_key_here"
@@ -69,6 +49,25 @@ Point MCP client configuration to `dist/index.js` using `node`:
     }
   }
 }
+```
+
+### Claude Code
+
+```bash
+claude mcp add leantime -- npx -y @fauzaro01/leantime-mcp
+```
+
+Then set environment variables `LEANTIME_URL` and `LEANTIME_TOKEN`.
+
+> **Note**: Generate your API key in Leantime under **User Profile / Settings -> API Keys**.
+
+## Install from source (development)
+
+```bash
+git clone https://github.com/Fauzaro01/leantime-mcp.git
+cd leantime-mcp
+npm install
+npm run build
 ```
 
 ## License

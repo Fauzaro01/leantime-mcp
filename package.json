@@ -1,9 +1,15 @@
 {
-  "name": "leantime-mcp",
+  "name": "@fauzaro01/leantime-mcp",
   "version": "1.0.0",
   "description": "Custom MCP server for Leantime project management system (self-hosted)",
   "main": "dist/index.js",
+  "bin": {
+    "leantime-mcp": "dist/index.js"
+  },
   "type": "module",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
